@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ahmed Abdrabo | .NET engineer</title>
+<meta name="description" content="Ahmed Abdrabo, Software Engineer (.NET). ASP.NET Core, distributed systems, Angular.">
+<style>
+:root{--bg:#0c1726;--ink:#cfe6ee;--dim:#7f9bab;--edge:#070d16}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--edge);color:var(--ink);font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+#frame{position:fixed;inset:12px;background:radial-gradient(120% 90% at 50% 100%,#14304a 0,#0c1726 55%,#08111d 100%);border-radius:6px;overflow:hidden;box-shadow:inset 0 0 60px #0008}
+canvas{pointer-events:none;position:absolute;inset:0;width:100%;height:100%;display:block}
+.label{position:absolute;transform:translate(-50%,-50%);background:none;border:0;color:var(--ink);font:inherit;font-size:15px;padding:10px 12px;cursor:pointer;transition:opacity .5s,color .2s;white-space:nowrap}
+.label:hover,.label:focus-visible{color:#fff;text-decoration:underline;outline:none}
+body.scene .label{opacity:0;pointer-events:none}
+#panel{position:absolute;z-index:4;background:none;border:0;padding:0 4px 0 0;overflow:auto;scrollbar-width:none;opacity:0;pointer-events:none;transition:opacity .35s;line-height:1.65;font-size:15px;text-shadow:0 0 4px #08111d,0 0 10px #08111d,0 0 18px #08111d}
+#panel::-webkit-scrollbar{display:none}
+#panel.r{text-align:right}
+#panel ul{list-style:none!important;padding:0!important}
+#panel li::before{content:'\2013  ';color:var(--dim)}
+body.scene #panel{opacity:1;pointer-events:auto}
+#panel h1{margin-top:0!important;font-size:19px;font-weight:600;margin:0 0 6px;color:#e8eaf6}
+#panel h2{font-size:15px;font-weight:600;margin:22px 0 2px;color:#e8eaf6}
+#panel .meta{color:var(--dim);font-size:13px;margin:0 0 6px}
+#panel ul{margin:6px 0 0}
+#panel li{margin:0 0 6px}
+#panel a{color:var(--ink)}
+#panel p{margin:0 0 10px}
+.tag{display:inline-block;border:1px solid #2f5670;border-radius:99px;padding:1px 10px;margin:0 6px 6px 0;font-size:13px}
+#back{z-index:6;position:absolute;left:24px;bottom:56px;width:58px;height:34px;border-radius:99px;border:0;background:#bfeadf;color:#2a2830;font:inherit;font-size:18px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s .4s}
+body.scene #back{opacity:1;pointer-events:auto}
+#hint{position:absolute;left:50%;top:5vh;transform:translateX(-50%);color:var(--dim);font-size:13px;transition:opacity .4s;text-align:center}
+body.scene #hint{opacity:0}
+#player{position:absolute;right:26px;bottom:56px;display:flex;align-items:center;gap:10px;background:#bfeadf;color:#2a2830;border-radius:99px;padding:6px 14px;font-size:13px;max-width:calc(100% - 52px);z-index:5}
+#player button{background:none;border:0;color:inherit;font:inherit;font-size:15px;cursor:pointer;padding:4px}
+#title{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:200px}
+#note{position:absolute;right:30px;bottom:112px;font-size:13px;color:var(--ink);text-align:left;z-index:5}
+@media(max-width:760px){
+ #panel{left:12px!important;right:12px!important;width:auto!important;top:12px!important;top:64px!important;max-height:calc(100% - 170px)!important;padding:0}
+ #panel.r{text-align:left}
+ #panel h1{margin-top:0}
+ .label{font-size:14px}
+ #title{max-width:150px}
+ #back{bottom:auto;top:18px;left:18px}
+ #note{display:none}
+}
+</style>
+</head>
+<body>
+<div id="frame">
+  <canvas id="net" aria-hidden="true"></canvas>
+  <canvas id="c" aria-hidden="true"></canvas>
+  <div id="hint">tap a branch</div>
+  <button class="label" data-k="work">experience</button>
+  <button class="label" data-k="projects">projects</button>
+  <button class="label" data-k="skills">skills</button>
+  <button class="label" data-k="edu">education</button>
+  <button class="label" data-k="me">me</button>
+  <section id="panel" aria-live="polite"></section>
+  <button id="back" aria-label="Back to the tree">&larr;</button>
+  <div id="note">press play, then &#9197; for the next track</div>
+  <div id="player"><button id="play" aria-label="Play or pause">&#9654;</button><span id="title">neon deploy (synthwave)</span><button id="next" aria-label="Next track">&#9197;</button></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#c'),ctx=cv.getContext('2d');
+let W,H,DPR,mobile;
+// seeded rng so the tree is the same every visit
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(20261126);
+// ---- content
+const PAGES={
+me:`<h1>hi, i'm Ahmed Abdrabo.</h1>
+<p class="meta">software engineer (.NET) &middot; Cairo, Egypt</p>
+<p>I build enterprise and government-facing web applications with ASP.NET Core, distributed systems and Angular. 3+ years, from database design to production support, for clients in the UAE and Egypt.</p>
+<p>Right now I'm at Emaratech, building backends for Dubai government platforms, and doing a Master's in Computer Science at Zagazig University.</p>
+<h2>say hi</h2>
+<ul><li><a href="mailto:ahmedabdraboo221b@gmail.com">ahmedabdraboo221b@gmail.com</a></li>
+<li><a href="https://www.linkedin.com/in/ahmed-abdrabo-9215bb233" target="_blank" rel="noopener">LinkedIn</a></li>
+<li><a href="https://github.com/Ahmed-Abdrabo" target="_blank" rel="noopener">GitHub</a></li></ul>`,
+work:`<h1>experience</h1>
+<h2>Emaratech &middot; Software Engineer</h2><p class="meta">Cairo, Egypt &middot; 12/2024 to present</p>
+<ul>
+<li><b>Dubai Courts.</b> Designed and built backend REST APIs for a judicial workflow platform serving thousands of users across Dubai, integrated with external government systems, with high availability and compliance requirements.</li>
+<li>Built a distributed Saga orchestrator with a custom circuit breaker coordinating 4 services, improving fault tolerance and workflow recovery.</li>
+<li><b>ERES.</b> Event-driven property watcher on RabbitMQ that automated notifications and replaced manual tracking.</li>
+<li>Clean Architecture and CQRS across services, tested with xUnit and NUnit. GitLab and Azure DevOps pipelines.</li></ul>
+<h2>Limitless Company &middot; Software Engineer</h2><p class="meta">Cairo, Egypt &middot; 10/2023 to 12/2024</p>
+<ul>
+<li><b>Cafe Management System.</b> Order, inventory and billing modules on ASP.NET Core Web API and EF Core, running across multiple cafe branches with concurrent users.</li>
+<li>JWT auth and role-based access with ASP.NET Core Identity, live order status with SignalR, scheduled jobs with Hangfire.</li>
+<li>Generic Repository and Unit of Work data layer, Swagger-documented REST APIs.</li>
+<li>Receipts and monthly sales and inventory reports for branch managers.</li></ul>`,
+projects:`<h1>projects</h1>
+<p class="meta">from my public GitHub &middot; <a href="https://github.com/Ahmed-Abdrabo" target="_blank" rel="noopener">github.com/Ahmed-Abdrabo</a></p>
+<h2><a href="https://github.com/Ahmed-Abdrabo/Innoverse" target="_blank" rel="noopener">Innoverse</a></h2><p class="meta">Angular 16 &middot; ASP.NET Core 8</p>
+<p>Full-stack blog management system: create, read, update and delete posts, with an Angular front end and an ASP.NET Core Web API behind it.</p>
+<h2><a href="https://github.com/Ahmed-Abdrabo/Talabat.API" target="_blank" rel="noopener">Talabat E-Commerce API</a></h2><p class="meta">.NET 8 &middot; Angular</p>
+<p>E-commerce backend with product and category management, shopping basket, orders and order history, delivery methods, and Stripe payments.</p>
+<h2><a href="https://github.com/Ahmed-Abdrabo/OrderingSystem" target="_blank" rel="noopener">Ordering System</a></h2><p class="meta">.NET &middot; EF Core &middot; SQL Server</p>
+<p>Order management app on Onion Architecture: authentication, role-based access, order tracking, AutoMapper, repository and service layers, DTOs and database seeding.</p>
+<h2><a href="https://github.com/Ahmed-Abdrabo/CarsAPI" target="_blank" rel="noopener">Cars API</a></h2><p class="meta">ASP.NET Core 8 &middot; JWT</p>
+<p>CRUD API for car data on an N-tier structure with EF Core, secured with JWT authentication.</p>
+<h2><a href="https://github.com/Ahmed-Abdrabo/BookStoreMVC" target="_blank" rel="noopener">BookStoreMVC</a></h2><p class="meta">ASP.NET Core MVC</p>
+<p>Bookstore management app with book inventory, advanced search and sales tracking.</p>
+<h2><a href="https://github.com/Ahmed-Abdrabo/SagaOrchestrator" target="_blank" rel="noopener">SagaOrchestrator</a></h2><p class="meta">C#</p>
+<p>A Saga orchestrator project in C#.</p>
+<p>More repos on <a href="https://github.com/Ahmed-Abdrabo?tab=repositories" target="_blank" rel="noopener">GitHub</a>.</p>`,
+skills:`<h1>skills</h1>
+<h2>backend</h2><p><span class="tag">C#</span><span class="tag">.NET 8+</span><span class="tag">ASP.NET Core Web API</span><span class="tag">Minimal APIs</span><span class="tag">EF Core</span><span class="tag">LINQ</span><span class="tag">SignalR</span></p>
+<h2>architecture</h2><p><span class="tag">Clean Architecture</span><span class="tag">CQRS</span><span class="tag">DDD</span><span class="tag">Microservices</span><span class="tag">Event-Driven</span><span class="tag">Saga</span><span class="tag">SOLID</span></p>
+<h2>frontend</h2><p><span class="tag">Angular</span><span class="tag">TypeScript</span><span class="tag">JavaScript</span><span class="tag">RxJS</span><span class="tag">HTML5</span><span class="tag">CSS3</span></p>
+<h2>data and messaging</h2><p><span class="tag">SQL Server</span><span class="tag">PostgreSQL</span><span class="tag">Oracle</span><span class="tag">Redis</span><span class="tag">RabbitMQ</span><span class="tag">Hangfire</span></p>
+<h2>cloud and devops</h2><p><span class="tag">Azure</span><span class="tag">Azure DevOps</span><span class="tag">Docker</span><span class="tag">Git</span><span class="tag">GitLab</span><span class="tag">GitHub</span><span class="tag">JWT</span><span class="tag">OAuth2</span></p>
+<h2>testing</h2><p><span class="tag">xUnit</span><span class="tag">NUnit</span></p>`,
+edu:`<h1>education</h1>
+<h2>MSc Computer Science</h2><p class="meta">Zagazig University &middot; 09/2025 to present</p>
+<h2>BSc Computer Science</h2><p class="meta">Zagazig University &middot; 09/2020 to 07/2024 &middot; GPA 3.76/4.0, top 10% of class</p>
+<p>Graduation project (grade: Excellent): a real-time AI sign language interpreter built on .NET Core and SignalR, recognising gestures live through a web interface.</p>`
+};
+// ---- tree sprite (drawn once, stippled)
+const TW=620,TH=900; // sprite size
+const spr=document.createElement('canvas');spr.width=TW;spr.height=TH;
+const roots=document.createElement('canvas');roots.width=TW;roots.height=300;
+function buildTree(){
+  const g=spr.getContext('2d');g.clearRect(0,0,TW,TH);
+  const mask=document.createElement('canvas');mask.width=TW;mask.height=TH;const m=mask.getContext('2d');
+  m.fillStyle='#fff';
+  // trunk
+  m.fillRect(TW/2-12,300,24,TH-300);
+  // foliage blobs: wobbling column
+  const blobs=[];
+  for(let i=0;i<9;i++){const t=i/8;const cy=120+t*430;const cx=TW/2+Math.sin(t*5.2)*70*(0.4+t*0.6);const r=88+Math.sin(t*3.1+1)*26+(1-t)*12;blobs.push([cx,cy,r,r*0.82])}
+  blobs.push([TW/2,70,55,60]);
+  for(const [x,y,rx,ry] of blobs){for(let k=0;k<6;k++){m.beginPath();m.ellipse(x+(R()-.5)*50,y+(R()-.5)*40,rx*(0.5+R()*0.5),ry*(0.5+R()*0.5),0,0,7);m.fill()}}
+  // branches as lines
+  m.strokeStyle='#fff';m.lineWidth=5;
+  for(const [x,y,ex,ey] of BR){m.beginPath();m.moveTo(TW/2,y+40);m.lineTo(ex,ey);m.stroke()}
+  const md=m.getImageData(0,0,TW,TH).data;
+  g.fillStyle='#bfeadf';
+  for(let n=0;n<420000;n++){
+    const x=R()*TW|0,y=R()*TH|0;
+    if(md[(y*TW+x)*4+3]>10){const s=R()<.2?2.2:1.6;g.globalAlpha=.6+R()*.4;g.fillRect(x,y,s,s)}
+  }
+  g.globalAlpha=1;
+  // holes: darker dots to give texture
+  g.globalCompositeOperation='destination-out';
+  for(let n=0;n<5000;n++){g.fillRect(R()*TW,R()*TH*0.65,3,3)}
+  g.globalCompositeOperation='source-over';
+  // roots
+  const r=roots.getContext('2d');r.strokeStyle='#bfeadf';r.lineCap='round';
+  function root(x,y,a,len,w,d){if(d>5||len<8)return;const ex=x+Math.cos(a)*len,ey=y+Math.sin(a)*len;r.lineWidth=w;r.beginPath();r.moveTo(x,y);r.lineTo(ex,ey);r.stroke();
+    const k=2+(R()<.4);for(let i=0;i<k;i++)root(ex,ey,a+(R()-.5)*1.3,len*(0.62+R()*.18),w*.68,d+1)}
+  for(let i=0;i<5;i++)root(TW/2,0,Math.PI/2+(i-2)*.45+(R()-.5)*.2,70+R()*40,5,0);
+}
+// branch anchor points in sprite coords: [x,y,endx,endy,labelKey]
+const BR=[[0,175,170,150,'work'],[0,235,125,275,'projects'],[0,290,465,255,'skills'],[0,400,150,390,'edu'],[0,480,440,470,'me']];
+const LBL={work:[-1],projects:[-1],skills:[1],edu:[-1],me:[1]};
+// ---- scene
+let stars=[],grass=[];
+function layout(){
+  DPR=Math.min(devicePixelRatio||1,2);const f=$('#frame');W=f.clientWidth;H=f.clientHeight;mobile=W<760;
+  cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+  const rr=rng(7);stars=[];for(let i=0;i<160;i++)stars.push([rr()*W,rr()*H*.8,rr()<.12?1.6:.9,rr()]);
+  grass=[];const n=Math.floor(W/3);for(let i=0;i<n;i++)grass.push([i*3+rr()*3,10+rr()*(rr()<.07?46:20),(rr()-.5)*.5,rr()*6]);
+}
+let cur={x:0,y:0,s:1},tgt={x:0,y:0,s:1},scene=null,t0=performance.now();
+function home(){const s=mobile?Math.min(.5,(H*.8)/TH):Math.min(1,(H*.82)/TH+.05);return{s,x:W/2-TW*s/2,y:H*.93-TH*s}}
+function sceneT(){return home();const h=home();if(mobile){const s=Math.min(.42,H*.4/TH);return{s,x:-TW*s*.15,y:H*.04}}
+  const s=Math.min(.95,(H*.82)/TH+.05);return{s,x:W*.04-TW*s*.12,y:H*.93-TH*s}}
+function place(){tgt=scene?sceneT():home();if(!cur.s)cur={...tgt}}
+function frame(now){
+  const dt=Math.min(.05,(now-t0)/1000);t0=now;const k=1-Math.pow(.0025,dt);
+  cur.x+=(tgt.x-cur.x)*k;cur.y+=(tgt.y-cur.y)*k;cur.s+=(tgt.s-cur.s)*k;
+  ctx.clearRect(0,0,W,H);
+  const T=now/1000;
+  for(const [x,y,r,p] of []){ctx.globalAlpha=.25+.45*(0.5+0.5*Math.sin(T*.8+p*30));ctx.fillStyle='#c3c6d8';ctx.fillRect(x,y,r,r)}
+  ctx.globalAlpha=1;
+  const gy=cur.y+TH*cur.s; // ground line
+  // soil
+  ctx.fillStyle='#0a1420';ctx.fillRect(0,gy,W,H-gy);
+  // roots
+  ctx.save();ctx.globalAlpha=Math.min(1,Math.max(0,(H-gy)/90))*.45;ctx.drawImage(roots,cur.x,gy-2,TW*cur.s,300*cur.s);ctx.restore();
+  // tree
+  ctx.save();if(scene&&mobile)ctx.globalAlpha=.22;ctx.drawImage(spr,cur.x,cur.y,TW*cur.s,TH*cur.s);ctx.restore();
+  // grass
+  ctx.strokeStyle='#bfeadf';ctx.lineWidth=1.1;ctx.globalAlpha=.8;ctx.beginPath();
+  for(const [x,h,lean,ph] of grass){const sw=Math.sin(T*1.2+ph)*2.2;ctx.moveTo(x,gy+2);ctx.quadraticCurveTo(x+lean*h*.5,gy-h*.6,x+lean*h+sw,gy-h)}
+  ctx.stroke();ctx.globalAlpha=1;
+  // branch arrows (home only)
+  const a=scene?0:1;
+  moveLabels(a);
+  requestAnimationFrame(frame);
+}
+const labs={};document.querySelectorAll('.label').forEach(b=>labs[b.dataset.k]=b);
+function moveLabels(){
+  for(const [,,ex,ey,key] of BR){
+    const px=cur.x+ex*cur.s,py=cur.y+ey*cur.s;const side=LBL[key][0];
+    const el=labs[key];const off=Math.max(60,el.offsetWidth/2+14);
+    const hw=el.offsetWidth/2;el.style.left=Math.max(hw+4,Math.min(W-hw-4,px+side*(off+4)))+'px';el.style.top=py+'px';
+  }
+}
+// arrows are drawn on labels via canvas after tree: draw lines from label to branch tip
+const _frame=frame;
+function drawArrows(){}
+// ---- interaction
+function posPanel(k){const P=$('#panel');const br=BR.find(b=>b[4]===k);const side=LBL[k][0];const h=home();
+  const tx=h.x+br[2]*h.s,ty=h.y+br[3]*h.s;P.style.maxHeight='';
+  P.classList.toggle('r',side<0);if(mobile)return;
+  const space=side<0?tx-24:W-tx-24;const w=Math.max(280,Math.min(470,space));
+  P.style.width=w+'px';P.style.left=side<0?(tx-w-8)+'px':(tx+8)+'px';P.style.right='auto';
+  const top=Math.max(24,Math.min(ty-14,H-96-300));P.style.top=top+'px';P.style.maxHeight=(H-96-top)+'px';
+  }
+let twT=0;
+function typeIn(el){cancelAnimationFrame(twT);const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),ns=[];let n;while(n=w.nextNode())ns.push([n,n.nodeValue]);
+  ns.forEach(a=>a[0].nodeValue='');let i=0,j=0;
+  const step=()=>{let c=6;while(c>0&&i<ns.length){const [nd,full]=ns[i];const take=Math.min(c,full.length-j);j+=take;c-=take;nd.nodeValue=full.slice(0,j);if(j>=full.length){i++;j=0}}
+    if(i<ns.length)twT=requestAnimationFrame(step)};
+  el.onclick=()=>{cancelAnimationFrame(twT);ns.forEach(a=>a[0].nodeValue=a[1])};step()}
+function open(k){scene=k;$('#panel').innerHTML=PAGES[k];$('#panel').scrollTop=0;posPanel(k);typeIn($('#panel'));document.body.classList.add('scene');place();history.replaceState(null,'','#'+k)}
+function closeScene(){scene=null;document.body.classList.remove('scene');place();history.replaceState(null,'',location.pathname)}
+document.querySelectorAll('.label').forEach(b=>b.addEventListener('click',()=>open(b.dataset.k)));
+$('#back').onclick=closeScene;
+document.addEventListener('pointerdown',e=>{if(scene&&!e.target.closest('#panel,#back,#player,.label'))closeScene()});
+addEventListener('keydown',e=>{if(e.key==='Escape')closeScene()});
+addEventListener('resize',()=>{layout();place()});
+// ---- music: generative, synthesised in the browser (no samples, no copyright)
+const TRACKS=[
+ {n:'neon deploy (synthwave)',kind:'synth',bpm:104,prog:[45,41,48,43],arp:[0,7,12,15,12,7],lead:[0,3,7,12,10,7,3,7]},
+ {n:'midnight merge (electro)',kind:'synth',bpm:122,prog:[43,43,46,41],arp:[0,12,7,12,3,12,7,15],lead:[7,10,12,15,12,10,7,3]},
+ {n:'drift in c (calm)',kind:'amb',root:48,sc:[0,2,4,7,9],bpm:54,wave:'sine'}];
+let ac=null,master=null,noiseBuf=null,playing=false,ti=0,timer=null,step=0,nextT=0;
+const mf=n=>440*Math.pow(2,(n-69)/12);
+function tone(f,t,d,v,type,cut){const o=ac.createOscillator(),g=ac.createGain(),fl=ac.createBiquadFilter();o.type=type;o.frequency.value=f;
+  fl.type='lowpass';fl.frequency.setValueAtTime(cut||4000,t);fl.frequency.exponentialRampToValueAtTime(Math.max(300,(cut||4000)/4),t+d);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(fl);fl.connect(g);g.connect(master);o.start(t);o.stop(t+d+.05)}
+function kick(t){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);
+  g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g);g.connect(master);o.start(t);o.stop(t+.3)}
+function noise(t,d,v,hp){const s=ac.createBufferSource();s.buffer=noiseBuf;const f=ac.createBiquadFilter();f.type='highpass';f.frequency.value=hp;const g=ac.createGain();
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(master);s.start(t);s.stop(t+d+.02)}
+function schedule(){
+  const tr=TRACKS[ti];
+  if(tr.kind==='amb'){const spb=60/tr.bpm,t=ac.currentTime+.05;
+    if(step%8===0){tone(mf(tr.root),t,spb*7,.12,tr.wave);tone(mf(tr.root+7),t,spb*7,.05,tr.wave)}
+    if(Math.random()<.7){const n=tr.root+12+tr.sc[Math.random()*tr.sc.length|0]+(Math.random()<.3?12:0);tone(mf(n),t+Math.random()*.1,spb*3,.07,tr.wave)}
+    step++;timer=setTimeout(schedule,spb*500);return}
+  const sp=60/tr.bpm/4; // 16th
+  while(nextT<ac.currentTime+.25){
+    const t=nextT,i=step%16,bar=Math.floor(step/16)%4,root=tr.prog[bar];
+    if(i%4===0)kick(t);
+    if(i===4||i===12){noise(t,.16,.5,1800)}
+    if(i%2===0)noise(t,.04,.18,7000);
+    if(i%2===1)noise(t,.03,.08,9000);
+    tone(mf(root-12+(i%4===2?12:0)),t,sp*1.6,.2,'sawtooth',900);
+    tone(mf(root+12+tr.arp[i%tr.arp.length]),t,sp*1.4,.07,'square',2600);
+    if(bar>=1&&i%2===0){tone(mf(root+24+tr.lead[(i/2)%tr.lead.length]),t,sp*3,.05,'sawtooth',3500)}
+    if(i===0){tone(mf(root),t,sp*15,.05,'sawtooth',700);tone(mf(root+7),t,sp*15,.04,'sawtooth',700)}
+    nextT+=sp;step++}
+  timer=setTimeout(schedule,60)}
+function setPlay(p){
+  if(p){if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.gain.value=.55;
+      const dl=ac.createDelay();dl.delayTime.value=.3;const fb=ac.createGain();fb.gain.value=.3;master.connect(ac.destination);master.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(ac.destination);
+      noiseBuf=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+    ac.resume();step=0;nextT=ac.currentTime+.1;schedule()}else{clearTimeout(timer)}
+  playing=p;$('#play').innerHTML=p?'&#10074;&#10074;':'&#9654;'}
+$('#play').onclick=()=>setPlay(!playing);
+$('#next').onclick=()=>{ti=(ti+1)%TRACKS.length;$('#title').textContent=TRACKS[ti].n;if(playing){clearTimeout(timer);step=0;nextT=ac.currentTime+.1;schedule()}};
+
+// ---- background: a living service mesh (nodes = services, packets = requests/events)
+const nv=document.getElementById('net'),nx=nv.getContext('2d');
+let nodes=[],edges=[],packets=[],mouse={x:-999,y:-999},NW,NH;
+function netInit(){
+  NW=W;NH=H;nv.width=NW*DPR;nv.height=NH*DPR;nx.setTransform(DPR,0,0,DPR,0,0);
+  const r=rng(99),cnt=Math.max(16,Math.min(34,Math.round(NW*NH/32000)));
+  nodes=[];for(let i=0;i<cnt;i++)nodes.push({x:r()*NW,y:r()*NH*.86,vx:(r()-.5)*.12,vy:(r()-.5)*.12,ph:r()*6,down:0,hue:r()<.25?1:0});
+  edges=[];for(let i=0;i<cnt;i++){const d=nodes.map((n,j)=>[j,Math.hypot(n.x-nodes[i].x,n.y-nodes[i].y)]).filter(a=>a[0]!==i).sort((a,b)=>a[1]-b[1]).slice(0,2);
+    for(const [j] of d)if(!edges.some(e=>(e[0]===i&&e[1]===j)||(e[0]===j&&e[1]===i)))edges.push([i,j])}
+  packets=[]}
+function send(ei,rev){packets.push({e:ei,t:0,rev:!!rev,bounce:false,s:.004+Math.random()*.004})}
+function pulse(x,y){let b=0,bd=1e9;nodes.forEach((n,i)=>{const d=Math.hypot(n.x-x,n.y-y);if(d<bd){bd=d;b=i}});
+  edges.forEach((e,i)=>{if(e[0]===b||e[1]===b)send(i,e[1]===b)});nodes[b].down=0}
+addEventListener('pointermove',e=>{const f=$('#frame').getBoundingClientRect();mouse.x=e.clientX-f.left;mouse.y=e.clientY-f.top});
+addEventListener('pointerdown',e=>{const f=$('#frame').getBoundingClientRect();pulse(e.clientX-f.left,e.clientY-f.top)});
+let lastSpawn=0;
+function netFrame(now){
+  if(NW!==W||NH!==H)netInit();
+  nx.clearRect(0,0,NW,NH);
+  for(const n of nodes){n.x+=n.vx;n.y+=n.vy;if(n.x<10||n.x>NW-10)n.vx*=-1;if(n.y<10||n.y>NH*.86)n.vy*=-1;
+    const dx=n.x-mouse.x,dy=n.y-mouse.y,d=Math.hypot(dx,dy);if(d<140&&d>1){n.x+=dx/d*.8;n.y+=dy/d*.8}
+    if(n.down>0)n.down-=.004}
+  nx.lineWidth=1;
+  for(const [a,b] of edges){const A=nodes[a],B=nodes[b];const dead=A.down>0||B.down>0;nx.strokeStyle=dead?'rgba(255,140,120,.22)':'rgba(120,200,220,.2)';
+    nx.setLineDash(dead?[4,6]:[]);nx.beginPath();nx.moveTo(A.x,A.y);nx.lineTo(B.x,B.y);nx.stroke()}
+  nx.setLineDash([]);
+  if(now-lastSpawn>420&&edges.length){lastSpawn=now;send(Math.random()*edges.length|0,Math.random()<.5)}
+  for(let i=packets.length-1;i>=0;i--){const p=packets[i];const [a,b]=edges[p.e];let A=nodes[p.rev?b:a],B=nodes[p.rev?a:b];
+    p.t+=p.s*(p.bounce?-1:1);
+    // circuit breaker: rarely a target service fails, packet bounces back, then retried path heals
+    if(!p.bounce&&p.t>.8&&!p.checked){p.checked=true;if(Math.random()<.07){B.down=1;p.bounce=true}}
+    if(p.t<0||p.t>=1){if(!p.bounce&&Math.random()<.5){const nb=edges.map((e,j)=>[e,j]).filter(([e])=>e[0]===(p.rev?a:b)||e[1]===(p.rev?a:b));if(nb.length){const [e,j]=nb[Math.random()*nb.length|0];send(j,e[1]===(p.rev?a:b))}}packets.splice(i,1);continue}
+    const x=A.x+(B.x-A.x)*p.t,y=A.y+(B.y-A.y)*p.t;
+    nx.fillStyle=p.bounce?'rgba(255,150,130,.95)':'rgba(140,255,225,.95)';nx.shadowColor=nx.fillStyle;nx.shadowBlur=10;nx.beginPath();nx.arc(x,y,2.4,0,7);nx.fill();nx.shadowBlur=0}
+  for(const n of nodes){const pr=.5+.5*Math.sin(now/700+n.ph);const dead=n.down>0;
+    nx.strokeStyle=dead?'rgba(255,140,120,.9)':(n.hue?'rgba(170,150,255,.9)':'rgba(120,220,235,.85)');nx.fillStyle='#0c1726';nx.lineWidth=1.4;
+    nx.beginPath();nx.arc(n.x,n.y,5+pr*1.2,0,7);nx.fill();nx.stroke();
+    if(dead){nx.beginPath();nx.arc(n.x,n.y,10+(1-n.down)*8,0,7);nx.strokeStyle='rgba(255,140,120,'+(n.down*.5)+')';nx.stroke()}}
+  requestAnimationFrame(netFrame)}
+// ---- boot
+function drawBranchArrows(){}
+buildTree();layout();cur={x:0,y:0,s:0};place();cur={...tgt};
+const h=location.hash.slice(1);if(PAGES[h]){open(h);cur={...tgt}}
+requestAnimationFrame(frame);netInit();requestAnimationFrame(netFrame);
+</script>
+</body>
+</html>

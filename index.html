@@ -58,8 +58,8 @@ body.scene #hint,body.scene #note{opacity:0}
   <button class="label" data-k="me">me</button>
   <section id="panel" aria-live="polite"></section>
   <button id="back" aria-label="Back to the tree">&larr;</button>
-  <div id="note">press play, then &#9197; for the next track</div>
-  <div id="player"><button id="play" aria-label="Play or pause">&#9654;</button><span id="title">neon deploy (synthwave)</span><button id="next" aria-label="Next track">&#9197;</button></div>
+  <div id="note">press play for music</div>
+  <div id="player"><button id="play" aria-label="Play or pause">&#9654;</button><span id="title">drift in c (calm)</span></div>
 </div>
 <script>
 const $=s=>document.querySelector(s);
@@ -230,8 +230,6 @@ addEventListener('keydown',e=>{if(e.key==='Escape')closeScene()});
 addEventListener('resize',()=>{layout();place()});
 // ---- music: generative, synthesised in the browser (no samples, no copyright)
 const TRACKS=[
- {n:'neon deploy (synthwave)',kind:'synth',bpm:104,prog:[45,41,48,43],arp:[0,7,12,15,12,7],lead:[0,3,7,12,10,7,3,7]},
- {n:'midnight merge (electro)',kind:'synth',bpm:122,prog:[43,43,46,41],arp:[0,12,7,12,3,12,7,15],lead:[7,10,12,15,12,10,7,3]},
  {n:'drift in c (calm)',kind:'amb',root:48,sc:[0,2,4,7,9],bpm:54,wave:'sine'}];
 let ac=null,master=null,noiseBuf=null,playing=false,ti=0,timer=null,step=0,nextT=0;
 const mf=n=>440*Math.pow(2,(n-69)/12);
@@ -269,7 +267,6 @@ function setPlay(p){
     ac.resume();step=0;nextT=ac.currentTime+.1;schedule()}else{clearTimeout(timer)}
   playing=p;$('#play').innerHTML=p?'&#10074;&#10074;':'&#9654;'}
 $('#play').onclick=()=>setPlay(!playing);
-$('#next').onclick=()=>{ti=(ti+1)%TRACKS.length;$('#title').textContent=TRACKS[ti].n;if(playing){clearTimeout(timer);step=0;nextT=ac.currentTime+.1;schedule()}};
 
 // ---- background: a living service mesh (nodes = services, packets = requests/events)
 const nv=document.getElementById('net'),nx=nv.getContext('2d');
